@@ -1,0 +1,36 @@
+CREATE PROCEDURE AddUser
+    @Username NVARCHAR(50),
+    @Email NVARCHAR(100)
+AS
+BEGIN
+    INSERT INTO Users (Username, Email)
+    VALUES (@Username, @Email);
+END;
+
+
+private void AddUserToDatabase(string username, string email)
+{
+    try
+    {
+        using (SqlConnection conn = new SqlConnection(connectionString))
+        {
+            conn.Open();
+            using (SqlCommand cmd = new SqlCommand("AddUser", conn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@Username", username);
+                cmd.Parameters.AddWithValue("@Email", email);
+                
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        MessageBox.Show("User added successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        txtUsername.Clear();
+        txtEmail.Clear();
+    }
+    catch (Exception ex)
+    {
+        MessageBox.Show("Error: " + ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+    }
+}
