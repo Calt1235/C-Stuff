@@ -1,36 +1,41 @@
-CREATE PROCEDURE AddUser
-    @Username NVARCHAR(50),
-    @Email NVARCHAR(100)
-AS
-BEGIN
-    INSERT INTO Users (Username, Email)
-    VALUES (@Username, @Email);
-END;
+using System;
+using System.Data.SqlClient;
 
-
-private void AddUserToDatabase(string username, string email)
+public class Authenticator
 {
-    try
+    private readonly string _connectionString;
+
+    public Authenticator(string connectionString)
     {
-        using (SqlConnection conn = new SqlConnection(connectionString))
+        _connectionString = connectionString;
+    }
+
+    public bool ValidateUser(string username, string password)
+    {
+        string query = "SELECT Password FROM Users WHERE Username = @Username";
+
+        using (SqlConnection conn = new SqlConnection(_connectionString))
+        using (SqlCommand cmd = new SqlCommand(query, conn))
         {
-            conn.Open();
-            using (SqlCommand cmd = new SqlCommand("AddUser", conn))
+            cmd.Parameters.AddWithValue("@Username", username);
+
+            try
             {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@Username", username);
-                cmd.Parameters.AddWithValue("@Email", email);
-                
-                cmd.ExecuteNonQuery();
+                conn.Open();
+                object result = cmd.ExecuteScalar();
+
+                if (result != null)
+                {
+                    string storedPassword = result.ToString();
+                    return password == storedPassword; // Simple text comparison
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.Message);
             }
         }
 
-        MessageBox.Show("User added successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        txtUsername.Clear();
-        txtEmail.Clear();
-    }
-    catch (Exception ex)
-    {
-        MessageBox.Show("Error: " + ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        return false;
     }
 }
